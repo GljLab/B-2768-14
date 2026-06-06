@@ -103,7 +103,7 @@ import { useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import * as echarts from 'echarts'
 import { getMyGrowthReport, getMyGoals, getGrowthHistory } from '@/api/employeeEvaluation'
-import { getEmployeeGrowthReport, getEmployeeGoals } from '@/api/adminEvaluation'
+import { getEmployeeGrowthReport, getEmployeeGoals, getEmployeeGrowthHistory } from '@/api/adminEvaluation'
 
 const route = useRoute()
 const userStore = useUserStore()
@@ -154,14 +154,14 @@ const fetchReport = async () => {
   if (isAdmin.value) {
     res = await getEmployeeGrowthReport(cycleId, employeeId)
     goalsRes = await getEmployeeGoals(cycleId, employeeId)
+    historyRes = await getEmployeeGrowthHistory(employeeId)
   } else {
     res = await getMyGrowthReport(cycleId)
     goalsRes = await getMyGoals(cycleId)
+    historyRes = await getGrowthHistory()
   }
   report.value = res.data
   goalResults.value = goalsRes.data || []
-  
-  historyRes = await getGrowthHistory()
   growthHistory.value = historyRes.data || []
   
   await nextTick()

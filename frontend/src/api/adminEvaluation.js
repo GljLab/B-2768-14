@@ -160,3 +160,10 @@ export function getEmployeeGrowthReport(cycleId, employeeId) {
     method: 'get'
   })
 }
+
+export function getEmployeeGrowthHistory(employeeId) {
+  return request({
+    url: `/admin/evaluations/employee/${employeeId}/growth-history`,
+    method: 'get'
+  })
+}

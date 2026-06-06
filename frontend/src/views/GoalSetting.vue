@@ -148,9 +148,9 @@ import {
   getPendingColleagueEvaluations,
   submitColleagueEvaluation as apiSubmitColleagueEvaluation,
   submitSelfEvaluation as apiSubmitSelfEvaluation,
-  getMyGrowthReport
+  getMyGrowthReport,
+  getDimensions
 } from '@/api/employeeEvaluation'
-import { getDimensions as getAdminDimensions } from '@/api/adminEvaluation'
 
 const route = useRoute()
 const router = useRouter()

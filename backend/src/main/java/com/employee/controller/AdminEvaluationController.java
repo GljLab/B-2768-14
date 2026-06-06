@@ -135,4 +135,12 @@ public class AdminEvaluationController {
         GrowthReportVO report = adminEvaluationService.getEmployeeGrowthReport(cycleId, employeeId);
         return Result.success(report);
     }
+
+    @GetMapping("/employee/{employeeId}/growth-history")
+    @Operation(summary = "获取员工成长历史", description = "管理员查看员工的所有历史评价报告")
+    public Result<List<GrowthReport>> getEmployeeGrowthHistory(
+            @Parameter(description = "员工ID") @PathVariable Long employeeId) {
+        List<GrowthReport> history = adminEvaluationService.getEmployeeGrowthHistory(employeeId);
+        return Result.success(history);
+    }
 }

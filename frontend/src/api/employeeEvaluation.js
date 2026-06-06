@@ -124,3 +124,10 @@ export function getMyFeedbacks(cycleId) {
     method: 'get'
   })
 }
+
+export function getDimensions(cycleId) {
+  return request({
+    url: `/employee/evaluations/${cycleId}/dimensions`,
+    method: 'get'
+  })
+}

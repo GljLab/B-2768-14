@@ -441,9 +441,23 @@ public class EmployeeEvaluationService {
     }
 
     public List<GrowthReport> getEmployeeGrowthHistory(Long employeeId) {
-        return growthReportMapper.selectList(new LambdaQueryWrapper<GrowthReport>()
+        List<GrowthReport> reports = growthReportMapper.selectList(new LambdaQueryWrapper<GrowthReport>()
             .eq(GrowthReport::getEmployeeId, employeeId)
             .orderByDesc(GrowthReport::getCycleId));
+        
+        if (!reports.isEmpty()) {
+            List<Long> cycleIds = reports.stream().map(GrowthReport::getCycleId).distinct().toList();
+            List<EvaluationCycle> cycles = evaluationCycleMapper.selectList(
+                new LambdaQueryWrapper<EvaluationCycle>().in(EvaluationCycle::getId, cycleIds));
+            Map<Long, String> cycleNameMap = cycles.stream()
+                .collect(Collectors.toMap(EvaluationCycle::getId, EvaluationCycle::getCycleName));
+            
+            for (GrowthReport report : reports) {
+                report.setCycleName(cycleNameMap.get(report.getCycleId()));
+            }
+        }
+        
+        return reports;
     }
 
     @Transactional(rollbackFor = Exception.class)

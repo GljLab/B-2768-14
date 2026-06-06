@@ -155,6 +155,13 @@ public class EmployeeEvaluationController {
         return Result.success(history);
     }
 
+    @GetMapping("/{cycleId}/dimensions")
+    @Operation(summary = "获取评价维度", description = "获取评价周期的评价维度配置")
+    public Result<List<EvaluationDimension>> getDimensions(@Parameter(description = "周期ID") @PathVariable Long cycleId) {
+        List<EvaluationDimension> dimensions = evaluationCycleService.getDimensions(cycleId);
+        return Result.success(dimensions);
+    }
+
     @GetMapping("/growth-plans")
     @Operation(summary = "获取我的成长计划", description = "查看我的成长计划列表")
     public Result<List<GrowthPlan>> getGrowthPlans(HttpServletRequest request) {

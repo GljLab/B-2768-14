@@ -336,4 +336,8 @@ public class AdminEvaluationService {
     public GrowthReportVO getEmployeeGrowthReport(Long cycleId, Long employeeId) {
         return employeeEvaluationService.getGrowthReport(cycleId, employeeId);
     }
+
+    public List<GrowthReport> getEmployeeGrowthHistory(Long employeeId) {
+        return employeeEvaluationService.getEmployeeGrowthHistory(employeeId);
+    }
 }
