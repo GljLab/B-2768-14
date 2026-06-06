@@ -117,4 +117,22 @@ public class AdminEvaluationController {
             return Result.error("更新失败: " + e.getMessage());
         }
     }
+
+    @GetMapping("/{cycleId}/employee/{employeeId}/goals")
+    @Operation(summary = "获取员工工作目标", description = "管理员查看员工的工作目标")
+    public Result<List<WorkGoal>> getEmployeeGoals(
+            @Parameter(description = "周期ID") @PathVariable Long cycleId,
+            @Parameter(description = "员工ID") @PathVariable Long employeeId) {
+        List<WorkGoal> goals = adminEvaluationService.getEmployeeGoals(cycleId, employeeId);
+        return Result.success(goals);
+    }
+
+    @GetMapping("/{cycleId}/employee/{employeeId}/report")
+    @Operation(summary = "获取员工成长报告", description = "管理员查看员工的成长报告")
+    public Result<GrowthReportVO> getEmployeeGrowthReport(
+            @Parameter(description = "周期ID") @PathVariable Long cycleId,
+            @Parameter(description = "员工ID") @PathVariable Long employeeId) {
+        GrowthReportVO report = adminEvaluationService.getEmployeeGrowthReport(cycleId, employeeId);
+        return Result.success(report);
+    }
 }

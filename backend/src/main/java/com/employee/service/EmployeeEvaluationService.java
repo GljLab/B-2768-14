@@ -39,6 +39,10 @@ public class EmployeeEvaluationService {
             .orderByAsc(WorkGoal::getId));
     }
 
+    public List<WorkGoal> getWorkGoals(Long cycleId, Long employeeId) {
+        return getEmployeeGoals(cycleId, employeeId);
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public void saveWorkGoals(Long cycleId, Long employeeId, List<WorkGoalRequest> goals) {
         workGoalMapper.delete(new LambdaQueryWrapper<WorkGoal>()
@@ -400,10 +404,40 @@ public class EmployeeEvaluationService {
         }
     }
 
-    public GrowthReport getGrowthReport(Long cycleId, Long employeeId) {
+    public GrowthReport getGrowthReportEntity(Long cycleId, Long employeeId) {
         return growthReportMapper.selectOne(new LambdaQueryWrapper<GrowthReport>()
             .eq(GrowthReport::getCycleId, cycleId)
             .eq(GrowthReport::getEmployeeId, employeeId));
+    }
+
+    public GrowthReportVO getGrowthReport(Long cycleId, Long employeeId) {
+        GrowthReport report = getGrowthReportEntity(cycleId, employeeId);
+        if (report == null) return null;
+
+        GrowthReportVO vo = new GrowthReportVO();
+        vo.setCycleId(report.getCycleId());
+        vo.setEmployeeId(report.getEmployeeId());
+        vo.setEmployeeName(report.getEmployeeName());
+        vo.setDepartmentName(report.getDepartmentName());
+        vo.setTotalScore(report.getTotalScore());
+        vo.setGrade(report.getGrade());
+        vo.setSelfScore(report.getSelfScore());
+        vo.setColleagueScore(report.getColleagueScore());
+        vo.setAdminScore(report.getAdminScore());
+        vo.setDepartmentRank(report.getDepartmentRank());
+        vo.setCompanyRank(report.getCompanyRank());
+
+        List<WorkGoal> goals = getWorkGoals(cycleId, employeeId);
+        List<GoalResultVO> goalResults = goals.stream().map(g -> {
+            GoalResultVO gr = new GoalResultVO();
+            gr.setGoalId(g.getId());
+            gr.setGoalName(g.getGoalName());
+            gr.setWeight(g.getWeight());
+            return gr;
+        }).collect(Collectors.toList());
+        vo.setGoalResults(goalResults);
+
+        return vo;
     }
 
     public List<GrowthReport> getEmployeeGrowthHistory(Long employeeId) {

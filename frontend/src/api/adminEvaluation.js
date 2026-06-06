@@ -15,6 +15,14 @@ export function getCycleDetail(id) {
   })
 }
 
+export function updateCycle(id, data) {
+  return request({
+    url: `/admin/evaluation-cycles/${id}`,
+    method: 'put',
+    data
+  })
+}
+
 export function createCycle(data) {
   return request({
     url: '/admin/evaluation-cycles',
@@ -136,5 +144,19 @@ export function updateAdminMeeting(data) {
     url: '/admin/evaluations/meeting/update',
     method: 'post',
     data
+  })
+}
+
+export function getEmployeeGoals(cycleId, employeeId) {
+  return request({
+    url: `/admin/evaluations/${cycleId}/employee/${employeeId}/goals`,
+    method: 'get'
+  })
+}
+
+export function getEmployeeGrowthReport(cycleId, employeeId) {
+  return request({
+    url: `/admin/evaluations/${cycleId}/employee/${employeeId}/report`,
+    method: 'get'
   })
 }

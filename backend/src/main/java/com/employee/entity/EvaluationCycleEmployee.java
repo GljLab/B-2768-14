@@ -1,6 +1,7 @@
 package com.employee.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -40,4 +41,13 @@ public class EvaluationCycleEmployee {
     
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
+    
+    @TableField(exist = false)
+    private String cycleName;
+    
+    @TableField(exist = false)
+    private String startDate;
+    
+    @TableField(exist = false)
+    private String endDate;
 }

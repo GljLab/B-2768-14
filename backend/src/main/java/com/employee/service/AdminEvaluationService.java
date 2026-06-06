@@ -328,4 +328,12 @@ public class AdminEvaluationService {
         meeting.setUpdatedAt(LocalDateTime.now());
         oneOnOneMeetingMapper.updateById(meeting);
     }
+
+    public List<WorkGoal> getEmployeeGoals(Long cycleId, Long employeeId) {
+        return employeeEvaluationService.getWorkGoals(cycleId, employeeId);
+    }
+
+    public GrowthReportVO getEmployeeGrowthReport(Long cycleId, Long employeeId) {
+        return employeeEvaluationService.getGrowthReport(cycleId, employeeId);
+    }
 }

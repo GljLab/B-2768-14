@@ -48,8 +48,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { getAdminEvaluation, submitAdminEvaluation } from '@/api/adminEvaluation'
-import { getMyGoals } from '@/api/employeeEvaluation'
+import { getAdminEvaluation, submitAdminEvaluation, getEmployeeGoals } from '@/api/adminEvaluation'
 
 const route = useRoute()
 const submitting = ref(false)
@@ -71,7 +70,7 @@ const fetchGoals = async () => {
   formState.cycleId = Number(cycleId)
   formState.employeeId = Number(employeeId)
   
-  const res = await getMyGoals(cycleId)
+  const res = await getEmployeeGoals(cycleId, employeeId)
   goals.value = res.data || []
   
   for (const goal of goals.value) {

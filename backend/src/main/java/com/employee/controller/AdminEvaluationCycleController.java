@@ -37,6 +37,19 @@ public class AdminEvaluationCycleController {
         }
     }
 
+    @PutMapping("/{id}")
+    @Operation(summary = "更新评价周期", description = "管理员更新草稿状态的评价周期")
+    public Result<String> updateCycle(
+            @Parameter(description = "周期ID") @PathVariable Long id,
+            @Valid @RequestBody EvaluationCycleRequest request) {
+        try {
+            evaluationCycleService.updateCycle(id, request);
+            return Result.success("更新成功");
+        } catch (Exception e) {
+            return Result.error("更新失败: " + e.getMessage());
+        }
+    }
+
     @GetMapping
     @Operation(summary = "获取评价周期列表", description = "分页查询评价周期列表")
     public Result<IPage<EvaluationCycle>> getCycleList(

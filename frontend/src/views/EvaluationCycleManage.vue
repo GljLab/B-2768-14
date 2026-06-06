@@ -16,6 +16,7 @@
           </template>
           <template v-if="column.key === 'action'">
             <a-button type="link" @click="viewProgress(record.id)">进度看板</a-button>
+            <a-button v-if="record.status === 0" type="link" @click="handleEdit(record)">编辑</a-button>
             <a-button v-if="record.status === 0" type="link" @click="handleStart(record.id)">启动</a-button>
             <a-button v-if="record.status === 1" type="link" @click="handleEnd(record.id)">结束</a-button>
             <a-button type="link" @click="viewEvaluations(record.id)">评价记录</a-button>
@@ -27,11 +28,11 @@
 
     <a-modal
       v-model:open="createModalVisible"
-      title="创建评价周期"
+      :title="editingId ? '编辑评价周期' : '创建评价周期'"
       width="800px"
       :confirm-loading="submitLoading"
       @ok="handleSubmit"
-      @cancel="createModalVisible = false"
+      @cancel="handleCancel"
     >
       <a-form :model="formState" :label-col="{ span: 6 }" :wrapper-col="{ span: 16 }">
         <a-form-item label="周期名称" required>
@@ -93,6 +94,8 @@ import { useRouter } from 'vue-router'
 import {
   getCycleList,
   createCycle,
+  updateCycle,
+  getCycleDetail,
   startCycle,
   endCycle
 } from '@/api/adminEvaluation'
@@ -102,6 +105,7 @@ const router = useRouter()
 const loading = ref(false)
 const submitLoading = ref(false)
 const createModalVisible = ref(false)
+const editingId = ref(null)
 const cycleList = ref([])
 
 const pagination = reactive({
@@ -170,7 +174,56 @@ const fetchCycles = async () => {
 }
 
 const showCreateModal = () => {
+  editingId.value = null
+  resetForm()
   createModalVisible.value = true
+}
+
+const handleEdit = async (record) => {
+  editingId.value = record.id
+  try {
+    const res = await getCycleDetail(record.id)
+    const data = res.data
+    formState.cycleName = data.cycleName
+    formState.dateRange = [dayjs(data.startDate), dayjs(data.endDate)]
+    formState.targetType = data.targetType
+    formState.selfWeight = data.selfWeight
+    formState.colleagueWeight = data.colleagueWeight
+    formState.adminWeight = data.adminWeight
+    formState.goalDeadline = data.goalDeadline ? dayjs(data.goalDeadline) : null
+    formState.selfEvalRange = (data.selfEvalStart && data.selfEvalDeadline) ? [dayjs(data.selfEvalStart), dayjs(data.selfEvalDeadline)] : []
+    formState.colleagueEvalRange = (data.colleagueEvalStart && data.colleagueEvalDeadline) ? [dayjs(data.colleagueEvalStart), dayjs(data.colleagueEvalDeadline)] : []
+    formState.adminEvalDeadline = data.adminEvalDeadline ? dayjs(data.adminEvalDeadline) : null
+    formState.oneOnOneDeadline = data.oneOnOneDeadline ? dayjs(data.oneOnOneDeadline) : null
+    formState.feedbackDeadline = data.feedbackDeadline ? dayjs(data.feedbackDeadline) : null
+    createModalVisible.value = true
+  } catch (e) {
+    console.error(e)
+    message.error('获取详情失败')
+  }
+}
+
+const resetForm = () => {
+  formState.cycleName = ''
+  formState.dateRange = []
+  formState.targetType = 1
+  formState.departmentIds = []
+  formState.employeeIds = []
+  formState.selfWeight = 20
+  formState.colleagueWeight = 30
+  formState.adminWeight = 50
+  formState.goalDeadline = null
+  formState.selfEvalRange = []
+  formState.colleagueEvalRange = []
+  formState.adminEvalDeadline = null
+  formState.oneOnOneDeadline = null
+  formState.feedbackDeadline = null
+}
+
+const handleCancel = () => {
+  createModalVisible.value = false
+  resetForm()
+  editingId.value = null
 }
 
 const handleSubmit = async () => {
@@ -200,26 +253,33 @@ const handleSubmit = async () => {
       colleagueEvalDeadline: formState.colleagueEvalRange?.[1]?.format('YYYY-MM-DD HH:mm:ss'),
       adminEvalDeadline: formState.adminEvalDeadline?.format('YYYY-MM-DD HH:mm:ss'),
       oneOnOneDeadline: formState.oneOnOneDeadline?.format('YYYY-MM-DD HH:mm:ss'),
-      feedbackDeadline: formState.feedbackDeadline?.format('YYYY-MM-DD HH:mm:ss'),
-      gradeStandards: [
+      feedbackDeadline: formState.feedbackDeadline?.format('YYYY-MM-DD HH:mm:ss')
+    }
+    
+    if (editingId.value) {
+      await updateCycle(editingId.value, data)
+      message.success('更新成功')
+    } else {
+      data.gradeStandards = [
         { gradeName: '卓越', minScore: 90, maxScore: 100, sortOrder: 1 },
         { gradeName: '优秀', minScore: 80, maxScore: 89, sortOrder: 2 },
         { gradeName: '良好', minScore: 70, maxScore: 79, sortOrder: 3 },
         { gradeName: '合格', minScore: 60, maxScore: 69, sortOrder: 4 },
         { gradeName: '待提升', minScore: 0, maxScore: 59, sortOrder: 5 }
-      ],
-      dimensions: [
+      ]
+      data.dimensions = [
         { dimensionName: '工作交付质量', dimensionDesc: '工作成果的质量和准确性', maxScore: 5, sortOrder: 1 },
         { dimensionName: '团队协作精神', dimensionDesc: '与团队成员的合作能力', maxScore: 5, sortOrder: 2 },
         { dimensionName: '沟通响应效率', dimensionDesc: '沟通的及时性和有效性', maxScore: 5, sortOrder: 3 },
         { dimensionName: '专业能力展现', dimensionDesc: '专业技能和知识水平', maxScore: 5, sortOrder: 4 },
         { dimensionName: '主动帮助他人', dimensionDesc: '主动帮助同事的意愿和行动', maxScore: 5, sortOrder: 5 }
       ]
+      await createCycle(data)
+      message.success('创建成功')
     }
-    
-    await createCycle(data)
-    message.success('创建成功')
     createModalVisible.value = false
+    resetForm()
+    editingId.value = null
     fetchCycles()
   } catch (e) {
     console.error(e)

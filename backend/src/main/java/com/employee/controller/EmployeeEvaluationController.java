@@ -24,12 +24,10 @@ public class EmployeeEvaluationController {
     private final EvaluationCycleService evaluationCycleService;
 
     @GetMapping("/cycles")
-    @Operation(summary = "获取可参与的评价周期", description = "员工获取自己参与的评价周期列表")
+    @Operation(summary = "获取可参与的评价周期", description = "员工获取自己参与的进行中评价周期列表")
     public Result<List<EvaluationCycleEmployee>> getMyCycles(HttpServletRequest request) {
         Long employeeId = (Long) request.getAttribute("employeeId");
-        List<EvaluationCycleEmployee> cycles = evaluationCycleService.getCycleEmployees(null).stream()
-            .filter(ce -> ce.getEmployeeId().equals(employeeId))
-            .toList();
+        List<EvaluationCycleEmployee> cycles = evaluationCycleService.getEmployeeActiveCycles(employeeId);
         return Result.success(cycles);
     }
 
@@ -143,9 +141,9 @@ public class EmployeeEvaluationController {
 
     @GetMapping("/{cycleId}/report")
     @Operation(summary = "获取我的成长报告", description = "查看某个评价周期的成长报告")
-    public Result<GrowthReport> getGrowthReport(@Parameter(description = "周期ID") @PathVariable Long cycleId, HttpServletRequest request) {
+    public Result<GrowthReportVO> getGrowthReport(@Parameter(description = "周期ID") @PathVariable Long cycleId, HttpServletRequest request) {
         Long employeeId = (Long) request.getAttribute("employeeId");
-        GrowthReport report = employeeEvaluationService.getGrowthReport(cycleId, employeeId);
+        GrowthReportVO report = employeeEvaluationService.getGrowthReport(cycleId, employeeId);
         return Result.success(report);
     }
 

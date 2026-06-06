@@ -230,17 +230,108 @@ public class EvaluationCycleService {
     }
 
     public List<EvaluationCycleEmployee> getCycleEmployees(Long cycleId) {
-        return cycleEmployeeMapper.selectList(new LambdaQueryWrapper<EvaluationCycleEmployee>()
-            .eq(EvaluationCycleEmployee::getCycleId, cycleId));
+        LambdaQueryWrapper<EvaluationCycleEmployee> wrapper = new LambdaQueryWrapper<>();
+        if (cycleId != null) {
+            wrapper.eq(EvaluationCycleEmployee::getCycleId, cycleId);
+        }
+        return cycleEmployeeMapper.selectList(wrapper);
+    }
+
+    public List<EvaluationCycleEmployee> getEmployeeActiveCycles(Long employeeId) {
+        List<EvaluationCycleEmployee> cycleEmployees = cycleEmployeeMapper.selectList(
+            new LambdaQueryWrapper<EvaluationCycleEmployee>()
+                .eq(EvaluationCycleEmployee::getEmployeeId, employeeId));
+        
+        List<Long> cycleIds = cycleEmployees.stream()
+            .map(EvaluationCycleEmployee::getCycleId)
+            .distinct()
+            .toList();
+        
+        if (cycleIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+        
+        List<EvaluationCycle> cycles = evaluationCycleMapper.selectList(
+            new LambdaQueryWrapper<EvaluationCycle>()
+                .in(EvaluationCycle::getId, cycleIds)
+                .eq(EvaluationCycle::getStatus, 1));
+        
+        Map<Long, EvaluationCycle> cycleMap = cycles.stream()
+            .collect(Collectors.toMap(EvaluationCycle::getId, c -> c));
+        
+        return cycleEmployees.stream()
+            .filter(ce -> cycleMap.containsKey(ce.getCycleId()))
+            .peek(ce -> {
+                EvaluationCycle c = cycleMap.get(ce.getCycleId());
+                ce.setCycleName(c.getCycleName());
+                ce.setStartDate(c.getStartDate().toString());
+                ce.setEndDate(c.getEndDate().toString());
+            })
+            .collect(Collectors.toList());
     }
 
     @Transactional(rollbackFor = Exception.class)
     public void startCycle(Long cycleId) {
         EvaluationCycle cycle = evaluationCycleMapper.selectById(cycleId);
         if (cycle == null) throw new RuntimeException("评价周期不存在");
+        if (cycle.getStatus() != 0) throw new RuntimeException("只有草稿状态的周期可以启动");
+        
+        validateCycleBeforeStart(cycle);
+        
+        List<EvaluationCycleEmployee> existingEmployees = getCycleEmployees(cycleId);
+        if (existingEmployees.isEmpty()) {
+            List<Employee> employees = employeeMapper.selectList(new LambdaQueryWrapper<Employee>().eq(Employee::getStatus, 1));
+            for (Employee emp : employees) {
+                EvaluationCycleEmployee ce = new EvaluationCycleEmployee();
+                ce.setCycleId(cycleId);
+                ce.setEmployeeId(emp.getId());
+                ce.setEmployeeName(emp.getName());
+                ce.setDepartmentId(emp.getDepartmentId());
+                ce.setDepartmentName(emp.getDepartment());
+                ce.setGoalStatus(0);
+                ce.setSelfEvalStatus(0);
+                ce.setColleagueEvalStatus(0);
+                ce.setAdminEvalStatus(0);
+                ce.setOneOnOneStatus(0);
+                ce.setFeedbackStatus(0);
+                ce.setReportStatus(0);
+                ce.setCreatedAt(LocalDateTime.now());
+                cycleEmployeeMapper.insert(ce);
+            }
+            autoAssignColleagueRelations(cycleId, employees);
+        }
+        
         cycle.setStatus(1);
         cycle.setUpdatedAt(LocalDateTime.now());
         evaluationCycleMapper.updateById(cycle);
+    }
+
+    private void validateCycleBeforeStart(EvaluationCycle cycle) {
+        if (cycle.getGoalDeadline() == null) {
+            throw new RuntimeException("请设置目标设定截止时间");
+        }
+        if (cycle.getSelfEvalStart() == null || cycle.getSelfEvalDeadline() == null) {
+            throw new RuntimeException("请设置自评时间段");
+        }
+        if (cycle.getColleagueEvalStart() == null || cycle.getColleagueEvalDeadline() == null) {
+            throw new RuntimeException("请设置同事评价时间段");
+        }
+        if (cycle.getAdminEvalDeadline() == null) {
+            throw new RuntimeException("请设置管理员评价截止时间");
+        }
+        if (cycle.getOneOnOneDeadline() == null) {
+            throw new RuntimeException("请设置一对一沟通截止时间");
+        }
+        if (cycle.getFeedbackDeadline() == null) {
+            throw new RuntimeException("请设置反馈意见截止时间");
+        }
+        if (cycle.getSelfWeight() == null || cycle.getColleagueWeight() == null || cycle.getAdminWeight() == null) {
+            throw new RuntimeException("请设置完整的评分权重");
+        }
+        int totalWeight = cycle.getSelfWeight() + cycle.getColleagueWeight() + cycle.getAdminWeight();
+        if (totalWeight != 100) {
+            throw new RuntimeException("评分权重之和必须为100%");
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -248,6 +339,31 @@ public class EvaluationCycleService {
         EvaluationCycle cycle = evaluationCycleMapper.selectById(cycleId);
         if (cycle == null) throw new RuntimeException("评价周期不存在");
         cycle.setStatus(2);
+        cycle.setUpdatedAt(LocalDateTime.now());
+        evaluationCycleMapper.updateById(cycle);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public void updateCycle(Long cycleId, EvaluationCycleRequest request) {
+        EvaluationCycle cycle = evaluationCycleMapper.selectById(cycleId);
+        if (cycle == null) throw new RuntimeException("评价周期不存在");
+        if (cycle.getStatus() != 0) throw new RuntimeException("只有草稿状态的周期可以编辑");
+        
+        if (request.getCycleName() != null) cycle.setCycleName(request.getCycleName());
+        if (request.getStartDate() != null) cycle.setStartDate(request.getStartDate());
+        if (request.getEndDate() != null) cycle.setEndDate(request.getEndDate());
+        if (request.getTargetType() != null) cycle.setTargetType(request.getTargetType());
+        if (request.getSelfWeight() != null) cycle.setSelfWeight(request.getSelfWeight());
+        if (request.getColleagueWeight() != null) cycle.setColleagueWeight(request.getColleagueWeight());
+        if (request.getAdminWeight() != null) cycle.setAdminWeight(request.getAdminWeight());
+        if (request.getGoalDeadline() != null) cycle.setGoalDeadline(request.getGoalDeadline());
+        if (request.getSelfEvalStart() != null) cycle.setSelfEvalStart(request.getSelfEvalStart());
+        if (request.getSelfEvalDeadline() != null) cycle.setSelfEvalDeadline(request.getSelfEvalDeadline());
+        if (request.getColleagueEvalStart() != null) cycle.setColleagueEvalStart(request.getColleagueEvalStart());
+        if (request.getColleagueEvalDeadline() != null) cycle.setColleagueEvalDeadline(request.getColleagueEvalDeadline());
+        if (request.getAdminEvalDeadline() != null) cycle.setAdminEvalDeadline(request.getAdminEvalDeadline());
+        if (request.getOneOnOneDeadline() != null) cycle.setOneOnOneDeadline(request.getOneOnOneDeadline());
+        if (request.getFeedbackDeadline() != null) cycle.setFeedbackDeadline(request.getFeedbackDeadline());
         cycle.setUpdatedAt(LocalDateTime.now());
         evaluationCycleMapper.updateById(cycle);
     }

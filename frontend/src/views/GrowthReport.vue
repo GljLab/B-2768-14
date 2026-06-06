@@ -98,12 +98,16 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, nextTick, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 import * as echarts from 'echarts'
 import { getMyGrowthReport, getMyGoals, getGrowthHistory } from '@/api/employeeEvaluation'
+import { getEmployeeGrowthReport, getEmployeeGoals } from '@/api/adminEvaluation'
 
 const route = useRoute()
+const userStore = useUserStore()
+const isAdmin = computed(() => userStore.role === 'admin')
 const report = ref(null)
 const goalResults = ref([])
 const colleagueSummary = ref(null)
@@ -145,13 +149,19 @@ const getAchievementText = (degree) => {
 
 const fetchReport = async () => {
   const { cycleId, employeeId } = route.params
-  const res = await getMyGrowthReport(cycleId)
-  report.value = res.data
+  let res, goalsRes, historyRes
   
-  const goalsRes = await getMyGoals(cycleId)
+  if (isAdmin.value) {
+    res = await getEmployeeGrowthReport(cycleId, employeeId)
+    goalsRes = await getEmployeeGoals(cycleId, employeeId)
+  } else {
+    res = await getMyGrowthReport(cycleId)
+    goalsRes = await getMyGoals(cycleId)
+  }
+  report.value = res.data
   goalResults.value = goalsRes.data || []
   
-  const historyRes = await getGrowthHistory()
+  historyRes = await getGrowthHistory()
   growthHistory.value = historyRes.data || []
   
   await nextTick()
