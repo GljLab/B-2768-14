@@ -16,7 +16,10 @@ import {
   HistoryOutlined,
   GiftOutlined,
   HeartOutlined,
-  TrophyOutlined
+  TrophyOutlined,
+  RiseOutlined,
+  AuditOutlined,
+  DashboardOutlined
 } from '@ant-design/icons-vue'
 import { h } from 'vue'
 
@@ -154,6 +157,20 @@ const menuConfig = [
     ]
   },
   {
+    key: 'evaluation-admin',
+    label: '成长评价',
+    icon: () => h(RiseOutlined),
+    roles: ['admin'],
+    children: [
+      {
+        key: 'evaluation-cycles',
+        label: '评价周期管理',
+        path: '/evaluation-cycles',
+        roles: ['admin']
+      }
+    ]
+  },
+  {
     key: 'personal',
     label: '个人中心',
     icon: () => h(UserOutlined),
@@ -163,6 +180,12 @@ const menuConfig = [
         key: 'profile',
         label: '个人资料',
         path: '/profile',
+        roles: ['employee']
+      },
+      {
+        key: 'growth-workbench',
+        label: '成长工作台',
+        path: '/growth-workbench',
         roles: ['employee']
       },
       {

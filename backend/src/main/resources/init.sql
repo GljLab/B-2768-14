@@ -528,3 +528,333 @@ CREATE TABLE IF NOT EXISTS birthday_party_photo_like (
     INDEX idx_photo_id (photo_id),
     INDEX idx_employee_id (employee_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='照片点赞表';
+
+-- ============================================
+-- 员工成长档案与多维度评价系统表结构
+-- ============================================
+
+-- 评价周期表
+CREATE TABLE IF NOT EXISTS evaluation_cycle (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '评价周期ID',
+    cycle_name VARCHAR(200) NOT NULL COMMENT '周期名称',
+    start_date DATE NOT NULL COMMENT '开始日期',
+    end_date DATE NOT NULL COMMENT '结束日期',
+    target_type TINYINT NOT NULL COMMENT '参与范围: 1=全员, 2=指定部门, 3=手动选择',
+    status TINYINT DEFAULT 0 COMMENT '状态: 0=草稿, 1=进行中, 2=已结束',
+    self_weight INT DEFAULT 20 COMMENT '自评权重(%)',
+    colleague_weight INT DEFAULT 30 COMMENT '同事评价权重(%)',
+    admin_weight INT DEFAULT 50 COMMENT '管理员评价权重(%)',
+    goal_deadline DATETIME COMMENT '目标设定截止时间',
+    self_eval_start DATETIME COMMENT '自评开始时间',
+    self_eval_deadline DATETIME COMMENT '自评截止时间',
+    colleague_eval_start DATETIME COMMENT '同事评价开始时间',
+    colleague_eval_deadline DATETIME COMMENT '同事评价截止时间',
+    admin_eval_deadline DATETIME COMMENT '管理员评价截止时间',
+    one_on_one_deadline DATETIME COMMENT '一对一沟通截止时间',
+    feedback_deadline DATETIME COMMENT '反馈意见截止时间',
+    created_by BIGINT NOT NULL COMMENT '创建人ID',
+    created_by_name VARCHAR(50) COMMENT '创建人姓名',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_status (status),
+    INDEX idx_start_date (start_date),
+    INDEX idx_end_date (end_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评价周期表';
+
+-- 评价周期参与部门表
+CREATE TABLE IF NOT EXISTS evaluation_cycle_department (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    department_id BIGINT NOT NULL COMMENT '部门ID',
+    department_name VARCHAR(50) COMMENT '部门名称',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    UNIQUE KEY uk_cycle_department (cycle_id, department_id),
+    INDEX idx_cycle_id (cycle_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评价周期参与部门表';
+
+-- 评价周期参与员工表
+CREATE TABLE IF NOT EXISTS evaluation_cycle_employee (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    employee_id BIGINT NOT NULL COMMENT '员工ID',
+    employee_name VARCHAR(50) COMMENT '员工姓名',
+    department_id BIGINT COMMENT '部门ID',
+    department_name VARCHAR(50) COMMENT '部门名称',
+    goal_status TINYINT DEFAULT 0 COMMENT '目标设定状态: 0=未开始, 1=进行中, 2=已提交, 3=已确认',
+    self_eval_status TINYINT DEFAULT 0 COMMENT '自评状态: 0=未开始, 1=进行中, 2=已提交',
+    colleague_eval_status TINYINT DEFAULT 0 COMMENT '同事评价状态: 0=未开始, 1=进行中, 2=已完成',
+    admin_eval_status TINYINT DEFAULT 0 COMMENT '管理员评价状态: 0=未开始, 1=已完成',
+    one_on_one_status TINYINT DEFAULT 0 COMMENT '一对一沟通状态: 0=未开始, 1=已预约, 2=已完成',
+    feedback_status TINYINT DEFAULT 0 COMMENT '反馈状态: 0=未提交, 1=已提交, 2=已处理',
+    report_status TINYINT DEFAULT 0 COMMENT '报告状态: 0=未生成, 1=已生成',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    UNIQUE KEY uk_cycle_employee (cycle_id, employee_id),
+    INDEX idx_cycle_id (cycle_id),
+    INDEX idx_employee_id (employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评价周期参与员工表';
+
+-- 成长等级标准表
+CREATE TABLE IF NOT EXISTS grade_standard (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    grade_name VARCHAR(20) NOT NULL COMMENT '等级名称: 卓越/优秀/良好/合格/待提升',
+    min_score INT NOT NULL COMMENT '最低分数(含)',
+    max_score INT NOT NULL COMMENT '最高分数(含)',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX idx_cycle_id (cycle_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='成长等级标准表';
+
+-- 工作目标表
+CREATE TABLE IF NOT EXISTS work_goal (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '目标ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    employee_id BIGINT NOT NULL COMMENT '员工ID',
+    goal_name VARCHAR(200) NOT NULL COMMENT '目标名称',
+    plan_content TEXT COMMENT '具体计划和衡量标准',
+    weight INT NOT NULL COMMENT '重要度权重(%)',
+    status TINYINT DEFAULT 1 COMMENT '状态: 1=草稿, 2=已提交, 3=已确认',
+    admin_advice TEXT COMMENT '管理员建议',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_cycle_id (cycle_id),
+    INDEX idx_employee_id (employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='工作目标表';
+
+-- 工作亮点记录表
+CREATE TABLE IF NOT EXISTS work_highlight (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '记录ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    employee_id BIGINT NOT NULL COMMENT '员工ID',
+    title VARCHAR(200) NOT NULL COMMENT '亮点标题',
+    content TEXT COMMENT '详细描述',
+    highlight_type TINYINT DEFAULT 1 COMMENT '类型: 1=重要工作, 2=解决难题, 3=新技能, 4=帮助同事, 5=其他',
+    attachments TEXT COMMENT '相关材料(JSON数组)',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_cycle_id (cycle_id),
+    INDEX idx_employee_id (employee_id),
+    INDEX idx_highlight_type (highlight_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='工作亮点记录表';
+
+-- 同事评价关系表
+CREATE TABLE IF NOT EXISTS colleague_evaluation_relation (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    evaluator_id BIGINT NOT NULL COMMENT '评价人ID',
+    evaluator_name VARCHAR(50) COMMENT '评价人姓名',
+    evaluated_id BIGINT NOT NULL COMMENT '被评价人ID',
+    evaluated_name VARCHAR(50) COMMENT '被评价人姓名',
+    status TINYINT DEFAULT 0 COMMENT '状态: 0=待评价, 1=已评价',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    UNIQUE KEY uk_cycle_evaluator_evaluated (cycle_id, evaluator_id, evaluated_id),
+    INDEX idx_cycle_id (cycle_id),
+    INDEX idx_evaluator_id (evaluator_id),
+    INDEX idx_evaluated_id (evaluated_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='同事评价关系表';
+
+-- 评价维度配置表
+CREATE TABLE IF NOT EXISTS evaluation_dimension (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '维度ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    dimension_name VARCHAR(50) NOT NULL COMMENT '维度名称',
+    dimension_desc VARCHAR(200) COMMENT '维度描述',
+    max_score INT DEFAULT 5 COMMENT '最高分',
+    sort_order INT DEFAULT 0 COMMENT '排序',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX idx_cycle_id (cycle_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评价维度配置表';
+
+-- 员工自我总结表
+CREATE TABLE IF NOT EXISTS self_evaluation (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '自评ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    employee_id BIGINT NOT NULL COMMENT '员工ID',
+    summary TEXT COMMENT '本期工作总结',
+    growth TEXT COMMENT '收获和成长',
+    challenges TEXT COMMENT '遇到的挑战',
+    improvements TEXT COMMENT '需要改进的地方',
+    submit_time DATETIME COMMENT '提交时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    UNIQUE KEY uk_cycle_employee (cycle_id, employee_id),
+    INDEX idx_cycle_id (cycle_id),
+    INDEX idx_employee_id (employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='员工自我总结表';
+
+-- 目标自评表
+CREATE TABLE IF NOT EXISTS goal_evaluation (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    employee_id BIGINT NOT NULL COMMENT '员工ID',
+    goal_id BIGINT NOT NULL COMMENT '目标ID',
+    self_score INT COMMENT '自评分(0-100)',
+    achievement_degree TINYINT COMMENT '达成度: 1=超出预期, 2=达到预期, 3=接近预期, 4=未达到',
+    actual_result TEXT COMMENT '实际完成情况',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    UNIQUE KEY uk_goal_employee (goal_id, employee_id),
+    INDEX idx_cycle_id (cycle_id),
+    INDEX idx_employee_id (employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='目标自评表';
+
+-- 同事评价表
+CREATE TABLE IF NOT EXISTS colleague_evaluation (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '评价ID',
+    relation_id BIGINT NOT NULL COMMENT '评价关系ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    evaluator_id BIGINT NOT NULL COMMENT '评价人ID',
+    evaluated_id BIGINT NOT NULL COMMENT '被评价人ID',
+    comment TEXT COMMENT '评语',
+    strengths TEXT COMMENT '闪光点',
+    improvements TEXT COMMENT '可提升的地方',
+    submit_time DATETIME COMMENT '提交时间',
+    is_deleted TINYINT DEFAULT 0 COMMENT '是否删除: 0=否, 1=是',
+    deleted_by BIGINT COMMENT '删除人ID',
+    deleted_at DATETIME COMMENT '删除时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX idx_relation_id (relation_id),
+    INDEX idx_cycle_id (cycle_id),
+    INDEX idx_evaluated_id (evaluated_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='同事评价表';
+
+-- 同事评价维度得分表
+CREATE TABLE IF NOT EXISTS colleague_dimension_score (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
+    evaluation_id BIGINT NOT NULL COMMENT '评价ID',
+    dimension_id BIGINT NOT NULL COMMENT '维度ID',
+    dimension_name VARCHAR(50) COMMENT '维度名称',
+    score INT NOT NULL COMMENT '得分(1-5)',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX idx_evaluation_id (evaluation_id),
+    INDEX idx_dimension_id (dimension_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='同事评价维度得分表';
+
+-- 管理员评价表
+CREATE TABLE IF NOT EXISTS admin_evaluation (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '评价ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    employee_id BIGINT NOT NULL COMMENT '被评价员工ID',
+    admin_id BIGINT NOT NULL COMMENT '管理员ID',
+    admin_name VARCHAR(50) COMMENT '管理员姓名',
+    overall_score INT COMMENT '综合评分(0-100)',
+    overall_comment TEXT COMMENT '综合评价',
+    development_suggestion TEXT COMMENT '发展建议',
+    submit_time DATETIME COMMENT '提交时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    UNIQUE KEY uk_cycle_employee (cycle_id, employee_id),
+    INDEX idx_cycle_id (cycle_id),
+    INDEX idx_employee_id (employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='管理员评价表';
+
+-- 管理员目标评价表
+CREATE TABLE IF NOT EXISTS admin_goal_evaluation (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
+    admin_eval_id BIGINT NOT NULL COMMENT '管理员评价ID',
+    goal_id BIGINT NOT NULL COMMENT '目标ID',
+    score INT COMMENT '评分(0-100)',
+    comment TEXT COMMENT '评价意见',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX idx_admin_eval_id (admin_eval_id),
+    INDEX idx_goal_id (goal_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='管理员目标评价表';
+
+-- 成长报告表
+CREATE TABLE IF NOT EXISTS growth_report (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '报告ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    employee_id BIGINT NOT NULL COMMENT '员工ID',
+    employee_name VARCHAR(50) COMMENT '员工姓名',
+    department_id BIGINT COMMENT '部门ID',
+    department_name VARCHAR(50) COMMENT '部门名称',
+    self_score DECIMAL(5,2) COMMENT '自评分',
+    colleague_score DECIMAL(5,2) COMMENT '同事评价平均分',
+    admin_score DECIMAL(5,2) COMMENT '管理员评分',
+    total_score DECIMAL(5,2) COMMENT '综合得分',
+    grade VARCHAR(20) COMMENT '成长等级',
+    department_rank INT COMMENT '部门排名',
+    company_rank INT COMMENT '全公司排名',
+    dimension_scores TEXT COMMENT '各维度得分(JSON)',
+    generated_at DATETIME COMMENT '生成时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    UNIQUE KEY uk_cycle_employee (cycle_id, employee_id),
+    INDEX idx_cycle_id (cycle_id),
+    INDEX idx_employee_id (employee_id),
+    INDEX idx_total_score (total_score)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='成长报告表';
+
+-- 一对一沟通预约表
+CREATE TABLE IF NOT EXISTS one_on_one_meeting (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '预约ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    employee_id BIGINT NOT NULL COMMENT '员工ID',
+    admin_id BIGINT NOT NULL COMMENT '管理员ID',
+    meeting_time DATETIME COMMENT '沟通时间',
+    meeting_location VARCHAR(200) COMMENT '沟通地点',
+    status TINYINT DEFAULT 0 COMMENT '状态: 0=待确认, 1=已确认, 2=已完成, 3=已取消',
+    advantages TEXT COMMENT '员工的优势特长',
+    develop_abilities TEXT COMMENT '需要发展的能力',
+    next_actions TEXT COMMENT '下一步行动建议',
+    development_direction TEXT COMMENT '可能的发展方向',
+    employee_confirm TINYINT DEFAULT 0 COMMENT '员工确认: 0=未确认, 1=已确认',
+    confirm_time DATETIME COMMENT '确认时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_cycle_id (cycle_id),
+    INDEX idx_employee_id (employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='一对一沟通预约表';
+
+-- 管理员可预约时间段表
+CREATE TABLE IF NOT EXISTS admin_available_time (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT 'ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    admin_id BIGINT NOT NULL COMMENT '管理员ID',
+    start_time DATETIME NOT NULL COMMENT '开始时间',
+    end_time DATETIME NOT NULL COMMENT '结束时间',
+    is_booked TINYINT DEFAULT 0 COMMENT '是否已被预约: 0=否, 1=是',
+    meeting_id BIGINT COMMENT '关联的预约ID',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    INDEX idx_cycle_id (cycle_id),
+    INDEX idx_admin_id (admin_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='管理员可预约时间段表';
+
+-- 员工反馈意见表
+CREATE TABLE IF NOT EXISTS evaluation_feedback (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '反馈ID',
+    cycle_id BIGINT NOT NULL COMMENT '评价周期ID',
+    employee_id BIGINT NOT NULL COMMENT '员工ID',
+    content TEXT NOT NULL COMMENT '反馈内容',
+    question_points TEXT COMMENT '具体疑问点',
+    supplement TEXT COMMENT '补充说明',
+    attachments TEXT COMMENT '证明材料(JSON数组)',
+    status TINYINT DEFAULT 0 COMMENT '状态: 0=待处理, 1=已处理',
+    admin_reply TEXT COMMENT '管理员回复',
+    is_adjusted TINYINT DEFAULT 0 COMMENT '是否调整评价: 0=否, 1=是',
+    handled_by BIGINT COMMENT '处理人ID',
+    handled_time DATETIME COMMENT '处理时间',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_cycle_id (cycle_id),
+    INDEX idx_employee_id (employee_id),
+    INDEX idx_status (status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='员工反馈意见表';
+
+-- 员工成长计划表
+CREATE TABLE IF NOT EXISTS growth_plan (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '计划ID',
+    employee_id BIGINT NOT NULL COMMENT '员工ID',
+    cycle_id BIGINT COMMENT '关联的评价周期ID',
+    next_cycle_id BIGINT COMMENT '下一周期ID',
+    ability_to_improve TEXT COMMENT '想要提升的能力',
+    specific_actions TEXT COMMENT '具体学习行动',
+    expected_completion DATE COMMENT '预计完成时间',
+    verification_method TEXT COMMENT '如何验证进步',
+    status TINYINT DEFAULT 1 COMMENT '状态: 1=草稿, 2=已提交, 3=已确认',
+    admin_advice TEXT COMMENT '管理员指导建议',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+    INDEX idx_employee_id (employee_id),
+    INDEX idx_cycle_id (cycle_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='员工成长计划表';

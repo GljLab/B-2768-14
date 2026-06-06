@@ -27,6 +27,14 @@ import BirthdayPartyDetail from '@/views/BirthdayPartyDetail.vue'
 import BirthdayProfile from '@/views/BirthdayProfile.vue'
 import BirthdayStatistics from '@/views/BirthdayStatistics.vue'
 import BirthdayMilestones from '@/views/BirthdayMilestones.vue'
+import EvaluationCycleManage from '@/views/EvaluationCycleManage.vue'
+import EvaluationProgress from '@/views/EvaluationProgress.vue'
+import EvaluationRecords from '@/views/EvaluationRecords.vue'
+import EvaluationStatistics from '@/views/EvaluationStatistics.vue'
+import AdminEvaluate from '@/views/AdminEvaluate.vue'
+import GrowthReport from '@/views/GrowthReport.vue'
+import GrowthWorkbench from '@/views/GrowthWorkbench.vue'
+import GoalSetting from '@/views/GoalSetting.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -206,6 +214,60 @@ const router = createRouter({
           name: 'BirthdayMilestones',
           component: BirthdayMilestones,
           meta: { requiresAuth: true, role: 'admin' }
+        },
+        {
+          path: 'evaluation-cycles',
+          name: 'EvaluationCycleManage',
+          component: EvaluationCycleManage,
+          meta: { requiresAuth: true, role: 'admin' }
+        },
+        {
+          path: 'evaluation-progress/:id',
+          name: 'EvaluationProgress',
+          component: EvaluationProgress,
+          meta: { requiresAuth: true, role: 'admin' }
+        },
+        {
+          path: 'evaluation-records/:id',
+          name: 'EvaluationRecords',
+          component: EvaluationRecords,
+          meta: { requiresAuth: true, role: 'admin' }
+        },
+        {
+          path: 'evaluation-statistics/:id',
+          name: 'EvaluationStatistics',
+          component: EvaluationStatistics,
+          meta: { requiresAuth: true, role: 'admin' }
+        },
+        {
+          path: 'admin-evaluate/:cycleId/:employeeId',
+          name: 'AdminEvaluate',
+          component: AdminEvaluate,
+          meta: { requiresAuth: true, role: 'admin' }
+        },
+        {
+          path: 'growth-report/:cycleId/:employeeId',
+          name: 'GrowthReport',
+          component: GrowthReport,
+          meta: { requiresAuth: true, role: 'admin' }
+        },
+        {
+          path: 'growth-workbench',
+          name: 'GrowthWorkbench',
+          component: GrowthWorkbench,
+          meta: { requiresAuth: true, role: 'employee' }
+        },
+        {
+          path: 'goal-setting/:id',
+          name: 'GoalSetting',
+          component: GoalSetting,
+          meta: { requiresAuth: true, role: 'employee' }
+        },
+        {
+          path: 'my-report/:cycleId',
+          name: 'MyReport',
+          component: GrowthReport,
+          meta: { requiresAuth: true, role: 'employee' }
         }
       ]
     }
