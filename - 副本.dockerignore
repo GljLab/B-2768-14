@@ -1,0 +1,33 @@
+# Node.js
+node_modules
+node_modules/**
+npm-debug.log
+package-lock.json
+
+# Java
+target
+*.class
+*.jar
+*.war
+
+# IDE
+.idea
+.vscode
+*.iml
+.DS_Store
+
+# Build
+dist
+build
+
+# Git
+.git
+.gitignore
+
+# Logs
+*.log
+
+# Environment
+.env
+.env.local
+

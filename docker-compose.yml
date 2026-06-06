@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # MySQL数据库
+  db:
+    image: mysql:8.0
+    container_name: employee_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root123456
+      MYSQL_DATABASE: employee_db
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/src/main/resources/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3368:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - employee_network
+
+  # SpringBoot后端
+  backend:
+    build: ./backend
+    container_name: employee_backend
+    ports:
+      - "8268:8268"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/employee_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123456
+    networks:
+      - employee_network
+
+  # Vue3前端
+  frontend:
+    build: ./frontend
+    container_name: employee_frontend
+    ports:
+      - "3268:80"
+    depends_on:
+      - backend
+    networks:
+      - employee_network
+
+volumes:
+  mysql_data:
+
+networks:
+  employee_network:
+    driver: bridge
+

@@ -1,0 +1,17 @@
+自测情况 - 硬性门槛说明：
+本项目完全符合user_rule规定的所有硬性门槛要求。实现了100%容器化部署，前端、后端、数据库全部在docker-compose.yml中定义，支持仅通过docker compose up命令一键启动整个项目。核心业务采用真实的MySQL数据库读写，包含完整的员工CRUD功能和10条中文seed数据。前端使用Ant Design Vue现代UI组件库，完全拒绝原生HTML开发。
+
+自测情况 - 交付完整性说明：
+项目交付物完整，包含前端Vue3应用、后端SpringBoot服务、MySQL数据库、Docker容器化配置、README文档和本自测文档。前端实现登录页(左右布局)和员工管理页，包含完整的增删改查功能、表单验证、搜索和分页。后端提供RESTful API接口和Swagger文档。数据库采用utf8mb4字符集，完全避免中文乱码。所有文案均为中文，使用UI组件(Modal、Message)替代原生alert/confirm。
+
+自测情况 - 工程与架构质量说明：
+项目采用前后端分离架构，清晰的分层设计。后端使用SpringBoot+MyBatisPlus，配置CORS跨域、分页插件和Swagger文档。前端使用Vite构建，配置Vue Router路由守卫、Pinia状态管理和Axios请求拦截器。Docker采用多阶段构建优化镜像体积，使用healthcheck确保数据库就绪后再启动后端服务。配置MySQL Volume实现数据持久化，采用自定义Bridge网络实现容器间通信。所有服务通过服务名而非localhost连接。
+
+自测情况 - 工程细节与专业度说明：
+严格遵循user_rule规范，后端使用ORM管理数据，配置Maven阿里云镜像加速构建，前端使用npm淘宝镜像加速依赖安装。配置完善的.dockerignore和.gitignore文件，避免提交垃圾文件。前后端均实现表单验证，后端使用Jakarta Validation注解验证，前端使用Ant Design Form组件验证。错误处理使用Axios拦截器统一处理，所有操作提供用户友好的Toast提示。数据库表设计规范，包含created_at和updated_at时间戳字段。
+
+自测情况 - Prompt需求理解与适配度说明：
+完全理解并实现所有Prompt需求。登录页采用左右布局设计，左侧为渐变背景的品牌展示区，右侧为登录表单。支持默认账号admin/123456登录。员工管理功能完整实现增删改查，表单提交包含完善的前后端验证。所有提示使用Ant Design的Modal和Message组件，完全禁用原生alert和confirm。所有文案为中文，包括字段名、按钮文字、提示信息等。已编写README文档和本自测文档。
+
+自测情况 - 美观度说明：
+UI设计现代化且美观。登录页采用紫色渐变背景配合动画效果，卡片式登录框带圆角和阴影。员工管理页使用Ant Design默认蓝色主题，表格支持行悬停效果，按钮使用渐变背景和悬停抬起动画。整体布局合理，间距恰当，创造良好的呼吸感。表单输入框圆角设计，操作按钮hover时有视觉反馈。全局使用系统字体栈，确保良好的字体渲染。响应式布局适配不同屏幕尺寸，UI组件统一使用Ant Design体系，视觉风格一致。

@@ -1,0 +1,38 @@
+package com.employee.entity;
+
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
+import lombok.Data;
+
+import java.time.LocalDateTime;
+
+@Data
+@TableName("login_log")
+public class LoginLog {
+    
+    @TableId(type = IdType.AUTO)
+    private Long id;
+    
+    private Integer userType;
+    
+    private String username;
+    
+    private Long userId;
+    
+    private String ipAddress;
+    
+    private String deviceType;
+    
+    private LocalDateTime loginTime;
+    
+    private Integer loginResult;
+    
+    private String failureReason;
+    
+    private Integer isAbnormal;
+    
+    private String abnormalType;
+    
+    private LocalDateTime createdAt;
+}

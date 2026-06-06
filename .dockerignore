@@ -1,0 +1,42 @@
+# Node本地依赖（本机node_modules丢弃，容器内重新安装）
+node_modules
+node_modules/**
+npm-debug.log
+
+# Java后端编译产物（backend目录生效，前端不影响）
+target
+*.class
+*.jar
+*.war
+
+# IDE系统缓存
+.idea
+.vscode
+*.iml
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+
+# 本地编译产物（dist/build本机打包产物丢掉，容器内npm run build重新生成）
+dist
+build
+
+# Git版本目录
+.git
+.gitignore
+
+# 日志
+*.log
+logs/
+
+# 本地环境配置
+.env
+.env.local
+.env.dev
+.env.prod
+
+# ✅ 删掉下面三行！！lock不能忽略
+# package-lock.json
+# pnpm-lock.yaml
+# yarn.lock
